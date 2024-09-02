@@ -176,12 +176,3 @@ const width = grid[0].length;
       console.log('Error');
   }
 }
-
-const emptyPuzzle = `2001
-0..0
-1000
-0..0`
-const words = ['casa', 'casa', 'ciao', 'anta']
-
-
-crosswordSolver(emptyPuzzle, words)
