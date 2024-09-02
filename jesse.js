@@ -6,6 +6,26 @@ function crosswordSolver(emptyPuzzle, words) {
       return;
   }
 
+  let i = 0; j = i+1;
+  let validity = true;
+
+  while (i < words.length && j < words.length) {
+    if (words[i] !== words[j]) {
+      j++
+    } else {
+      validity = false;
+      break
+    }
+    if (i === words.length - 1) {
+      i++
+    }
+  }
+
+  if (!validity) {
+    console.log('Error');
+    return
+  }
+
   // Check for invalid words length, emptyPuzzle characters, and words type 
   if (words.length < 3 || !/^[.\n012]+$/.test(emptyPuzzle) || !Array.isArray(words)) {
       console.log('Error');
@@ -139,7 +159,7 @@ const width = grid[0].length;
       let { row, col, direction } = start;
       for (let i = 0; i < word.length; i++) {
           grid[row][col] = '0';
-          
+
             // Proceed to next cell depending on direction
             if (direction === 'horizontal') {
               col++
@@ -157,32 +177,11 @@ const width = grid[0].length;
   }
 }
 
-const puzzle = `...1...........
-..1000001000...
-...0....0......
-.1......0...1..
-.0....100000000
-100000..0...0..
-.0.....1001000.
-.0.1....0.0....
-.10000000.0....
-.0.0......0....
-.0.0.....100...
-...0......0....
-..........0....`
-const words = [
-'sun',
-'sunglasses',
-'suncream',
-'swimming',
-'bikini',
-'beach',
-'icecream',
-'tan',
-'deckchair',
-'sand',
-'seaside',
-'sandals',
-]
+const emptyPuzzle = `2001
+0..0
+1000
+0..0`
+const words = ['casa', 'casa', 'ciao', 'anta']
 
-crosswordSolver(puzzle, words)
+
+crosswordSolver(emptyPuzzle, words)
