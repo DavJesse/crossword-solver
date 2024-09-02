@@ -1,59 +1,171 @@
-function solveCrossword(puzzle, words) {
-    const puzzleRows = puzzle.split("\n");
-    let ind = 0; 
-    
-  
-    for (let i = 0; i < puzzleRows.length; i++) {
-      for (let j = 0; j < puzzleRows[i].length; j++) {
-        if (puzzleRows[i][j] !== "0" && puzzleRows[i][j] !== ".") {
-          // Check horizontal placement
-          if (checkPlacement(puzzleRows, i, j, "horizontal", words[ind])) {
-            console.log(true);
-          }
-  
-          // Check vertical placement
-          if (checkPlacement(puzzleRows, i, j, "vertical", words[ind])) {
-            console.log(true);
-          }
-          
-          while (ind < words.length) {
-            ind++
-          }
-  
-        }
-      }
-    }
-  
-    console.log(false);
+function crosswordSolver(emptyPuzzle, words) {
+
+  // Validate input types
+  if (typeof emptyPuzzle !== 'string') {
+      console.log('Error');
+      return;
   }
-  
-  function checkPlacement(puzzleRows, row, col, direction, word) {
-    const height = puzzleRows.length;
-    const width = puzzleRows[0].length;
-    
-    // Check if the word fits within the puzzle boundaries
-    if (direction === "horizontal" && col + word.length > width) return false;
-    if (direction === "vertical" && row + word.length > height) return false;
-  
-    const indices = [];
-  
-    for (let i = 0; i < word.length; i++) {
-      let currentRow = direction === "horizontal" ? row : row + i;
-      let currentCol = direction === "horizontal" ? col + i : col;
-  
-      // Check if the current position is available ('0') or already matches the word letter
-      if (puzzleRows[currentRow][currentCol] !== '0' && puzzleRows[currentRow][currentCol] !== word[i]) {
-        return false;
-      }
-  
-      indices.push([currentRow, currentCol]);
-    }
-  
-    // If we've made it here, the word fits
-    return { success: true, indices: indices };
+
+  if (!Array.isArray(words)|| words.length < 3 || !/^[.\n012]+$/.test(emptyPuzzle)) {
+      console.log('Error');
+      return;
   }
-  // Example usage:
-  const emptyPuzzle = "2001\n0..0\n1000\n0..0";
-  const words = ['casa', 'alan', 'ciao', 'anta'];
-  console.log(solveCrossword(emptyPuzzle, words));
-  
+
+  // Check for invalid words
+  const invalidWords = words.some(word => typeof word !== "string");
+  if (invalidWords) {
+      console.log("Error");
+      return;
+  }
+
+  // Convert puzzle string into a 2D array
+  const puzzle = emptyPuzzle.split('\n').map(row => row.split(''));
+  const height = puzzle.length;
+  const width = puzzle[0].length;
+
+  // Sort words by length (longest first) and determine minimum word length
+  words.sort((a, b) => b.length - a.length);
+  const minWordLength = words[words.length-1].length;
+  let track = 0; // To track the number of placed words
+  const wordStarts = [];
+
+  // Identify potential starting points for words
+  for (let i = 0; i < height; i++) {
+      for (let j = 0; j < width; j++) {
+          if (puzzle[i][j] === '2') {
+              track += 2;
+          } else if (puzzle[i][j] === '1') {
+              track += 1;
+          }
+          if (puzzle[i][j] === '1' || puzzle[i][j] === '2') {
+              // Check across direction
+              if (j === 0 || puzzle[i][j-1] === '0' || puzzle[i][j-1] === '.') {
+                  let k = j;
+                  while (k < width && (puzzle[i][k] === '1' || puzzle[i][k] === '2' || puzzle[i][k] === '.' || puzzle[i][k] === '0')) {
+                      k++;
+                  }
+                  if (k - j >= minWordLength) { 
+                      wordStarts.push({ row: i, col: j, direction: 'across' });
+                  }
+              }
+              // Check down direction
+              if (i === 0 || puzzle[i-1][j] === '0' || puzzle[i-1][j] === '.') {
+                  let k = i;
+                  while (k < height && (puzzle[k][j] === '1' || puzzle[k][j] === '2' || puzzle[k][j] === '.' || puzzle[k][j] === '0')) {
+                      k++;
+                  }
+                  if (k - i >= minWordLength) { 
+                      wordStarts.push({ row: i, col: j, direction: 'down' });
+                  }
+              }
+          }
+      }
+  }
+
+  // Check if the number of track matches the number of words
+  if (track !== words.length) {
+      console.log('Error');
+      return;
+  }
+
+  // Recursive function to fill the puzzle
+  function fillPuzzle(index) {
+      if (index === words.length) {
+          return true; 
+      }
+
+      const word = words[index];
+      for (const start of wordStarts) {
+          if (canPlaceWord(word, start)) {
+              placeWord(word, start);
+              // console.log("===succesfuly placed===")
+              // console.log(puzzle.map(row => row.join('')))
+              // console.log("====end od succes=====")
+              if (fillPuzzle(index + 1)) {
+                  return true;
+              }
+              removeWord(word, start);
+          }
+      }
+
+      return false;
+  }
+
+  // Check if a word can be placed at the given start position
+  function canPlaceWord(word, start) {
+      let { row, col, direction } = start;
+      for (let i = 0; i < word.length; i++) {
+          if (row >= height || col >= width) return false;
+          if (puzzle[row][col] !== '0' && puzzle[row][col] !== '1' && puzzle[row][col] !== '2' && puzzle[row][col] !== word[i]) {
+              return false;
+          }
+          direction === 'across' ? col++ : row++;
+      }
+      return true;
+  }
+
+  // Place the word at the start position
+  function placeWord(word, start) {
+      let { row, col, direction } = start;
+      for (let i = 0; i < word.length; i++) {
+          puzzle[row][col] = word[i];
+          direction === 'across' ? col++ : row++;
+      }
+  }
+
+  // Remove the word from the puzzle (used for backtracking)
+  function removeWord(word, start) {
+      // console.log("===before removed===")
+      // console.log(puzzle.map(row => row.join('')))
+      // console.log("====end of removed=====")
+      let { row, col, direction } = start;
+      for (let i = 0; i < word.length; i++) {
+          puzzle[row][col] = '0';
+          direction === 'across' ? col++ : row++;
+      }
+      // console.log("===after  removed===")
+      // console.log(puzzle.map(row => row.join('')))
+      // console.log("====end of removed=====")
+  }
+
+  // console.log("=== initial puzzle===")
+  // console.log(puzzle.map(row => row.join('')))
+  // console.log("====end of puzzle=====")
+
+  // Attempt to solve the puzzle and output result
+  if (fillPuzzle(0)) {
+      console.log(puzzle.map(row => row.join('')).join('\n'));
+  } else {
+      console.log('Error');
+  }
+}
+
+const puzzle = `...1...........
+..1000001000...
+...0....0......
+.1......0...1..
+.0....100000000
+100000..0...0..
+.0.....1001000.
+.0.1....0.0....
+.10000000.0....
+.0.0......0....
+.0.0.....100...
+...0......0....
+..........0....`
+const words = [
+'sun',
+'sunglasses',
+'suncream',
+'swimming',
+'bikini',
+'beach',
+'icecream',
+'tan',
+'deckchair',
+'sand',
+'seaside',
+'sandals',
+]
+
+crosswordSolver(puzzle, words)
