@@ -40,40 +40,32 @@ function crosswordSolver(emptyPuzzle, words) {
         if (col === puzzleWidth) return solve(row + 1, 0);
         if (grid[row][col] !== '.' && isNaN(grid[row][col])) return solve(row, col + 1);
 
-        const wordCount = parseInt(grid[row][col], 10); // Added radix 10
-        if (isNaN(wordCount) || wordCount === 0) return solve(row, col + 1);
+        const wordCount = parseInt(grid[row][col]);
+        if (isNaN(wordCount)) return solve(row, col + 1);
 
-        const possibleWords = words.filter(word => !usedWords.has(word));
+        for (const word of words) {
+            if (usedWords.has(word)) continue;
 
-        let placedWords = 0;
-        for (const word of possibleWords) {
             if (isValidPlacement(word, row, col, true)) {
                 placeWord(word, row, col, true);
-                placedWords++;
-                if (solve(row, col + word.length)) return true;
+                if (solve(row, col + 1)) return true;
                 removeWord(word, row, col, true);
-                placedWords--;
             }
 
             if (isValidPlacement(word, row, col, false)) {
                 placeWord(word, row, col, false);
-                placedWords++;
-                if (solve(row + word.length, col)) return true;
+                if (solve(row, col + 1)) return true;
                 removeWord(word, row, col, false);
-                placedWords--;
             }
-
-            // If the number of words placed equals the number specified, proceed to next position
-            if (placedWords === wordCount) return solve(row, col + 1);
         }
 
         return false;
     }
 
     if (solve(0, 0)) {
-        return grid.map(row => row.join('')).join('\n');
+        console.log(grid.map(row => row.join('')).join('\n'));
     } else {
-        return 'Error';
+        console.log('Error');
     }
 }
 
@@ -84,4 +76,4 @@ const emptyPuzzle = `2001
 0..0`;
 const words = ['casa', 'alan', 'ciao', 'anta'];
 
-console.log(crosswordSolver(emptyPuzzle, words));
+crosswordSolver(emptyPuzzle, words);
